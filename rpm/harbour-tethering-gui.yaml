@@ -1,0 +1,30 @@
+Name: harbour-tethering-gui
+Summary: Tethering
+Version: 0.2.4
+Release: 1
+Group: Qt/Qt
+URL: http://example.org/
+License: BSD-new
+Sources:
+- '%{name}-%{version}.tar.bz2'
+Description: |
+  WiFi/Bluetooth tethering GUI for Sailfish OS
+Configure: none
+Builder: qtc5
+PkgConfigBR:
+- sailfishapp >= 0.0.10
+- Qt5Core
+- Qt5Qml
+- Qt5Quick
+Requires:
+- sailfishsilica-qt5 >= 0.10.9
+Files:
+- /usr/share/harbour-tethering-gui
+- /usr/share/icons/hicolor/86x86/apps
+- /usr/share/applications
+- /usr/bin
+- '%{_datadir}/icons/hicolor/86x86/apps/%{name}.png'
+- '%{_datadir}/applications/%{name}.desktop'
+- '%{_datadir}/%{name}/qml'
+- '%{_bindir}'
+PkgBR: []
