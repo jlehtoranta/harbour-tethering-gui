@@ -7,6 +7,7 @@ Wifi (WPA2) tethering by controlling `ConnMan`_ directly via D-BUS. The GUI will
 automatically create a packet data connection and power on the necessary
 interface(s), when enabling tethering. It will also restore the states of
 the interfaces, when a user disables tethering.
+
 .. _`Jolla`: http://jolla.com
 .. _`SailfishOS`: http://sailfishos.org
 .. _`ConnMan`: http://connman.net
