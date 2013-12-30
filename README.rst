@@ -7,6 +7,9 @@ Wifi (WPA2) tethering by controlling ConnMan directly via D-BUS. The GUI will
 automatically create a packet data connection and power on the necessary
 interface(s), when enabling tethering. It will also restore the states of
 the interfaces, when a user disables tethering.
+.. _jolla: http://jolla.com
+.. _sailfishos: http://sailfishos.org
+.. _connman: http://connman.net
 
 At the moment only basic information is shown in the GUI. This is somewhat
 due to the fact that ConnMan doesn't (yet) provide detailed information about
@@ -16,10 +19,6 @@ private network address is randomized every time and cannot be explicitly
 configured.
 
 Installable RPM packages can be downloaded from the pkg directory.
-
-.. _jolla: http://jolla.com
-.. _sailfishos: http://sailfishos.org
-.. _connman: http://connman.net
 
 
 License
