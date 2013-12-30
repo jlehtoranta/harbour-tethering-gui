@@ -9,7 +9,7 @@ TetheringQdbus::TetheringQdbus()
     dif_wifi_service = NULL;
     changing_state = false;
 
-    settings = new QSettings("Jlranta", "com.jlranta.tethering.sailfish");
+    settings = new QSettings("harbour-tethering-gui", "harbour.tethering.gui");
     dcon = new QDBusConnection(QDBusConnection::connectToBus(QDBusConnection::SystemBus, "connman"));
     dif_manager = new QDBusInterface("net.connman",
                                      "/",

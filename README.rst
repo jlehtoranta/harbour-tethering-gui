@@ -56,6 +56,8 @@ Releases
     * ``"Beta"`` -- Works well, but needs more testing
 
 * Changelog:
+    * ``v0.2.5``
+        * harbourize
     * ``v0.2.4``
         * first release
 
