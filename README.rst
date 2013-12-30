@@ -15,6 +15,8 @@ allows for configuring the SSID and PSK of the Wifi network. For example the
 private network address is randomized every time and cannot be explicitly
 configured.
 
+Installable RPM packages can be downloaded from the pkg directory.
+
 .. _jolla: http://jolla.com
 .. _sailfishos: http://sailfishos.org
 .. _connman: http://connman.net
