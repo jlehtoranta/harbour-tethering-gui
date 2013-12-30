@@ -2,8 +2,8 @@
 Tethering
 =========
 
-A tethering GUI for the Jolla phone (SailfishOS). It supports Bluetooth and
-Wifi (WPA2) tethering by controlling ConnMan directly via D-BUS. The GUI will
+A tethering GUI for the Jolla_ phone (SailfishOS_). It supports Bluetooth and
+Wifi (WPA2) tethering by controlling ConnMan_ directly via D-BUS. The GUI will
 automatically create a packet data connection and power on the necessary
 interface(s), when enabling tethering. It will also restore the states of
 the interfaces, when a user disables tethering.
