@@ -36,10 +36,9 @@ TetheringQdbus::TetheringQdbus()
 TetheringQdbus::~TetheringQdbus()
 {
     // Disable tethering on exit
+    restore_connection_state();
     disable("wifi");
     disable("bluetooth");
-    // Restore connection state
-    restore_connection_state();
 
     // Disconnect
     disconnect(dif_wifi, SIGNAL(PropertyChanged(QString, QDBusVariant)),
