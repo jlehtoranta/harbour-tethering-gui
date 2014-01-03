@@ -161,6 +161,7 @@ void TetheringQdbus::save_connection_state()
         QString tech = i.value().value("Type").toString();
         if (QString::compare(tech, "wifi") == 0) {
             wifi_pstate = i.value().value("Powered").toBool();
+            wifi_pstate_restore = wifi_pstate;
             wifi_tstate = i.value().value("Tethering").toBool();
         }
         else if (QString::compare(tech, "bluetooth") == 0) {
@@ -217,13 +218,14 @@ void TetheringQdbus::power_on(const QString &tech)
             enable_tethering(tech);
         }
         else {
+            changing_state = false;
             emit changing_tethering_status(tech, "Error: " + reply.errorMessage());
         }
-        return;
+    }
+    else {
+        enable_tethering(tech);
     }
 
-    enable_tethering(tech);
-    return;
 }
 
 void TetheringQdbus::enable_tethering(const QString &tech)
@@ -233,12 +235,12 @@ void TetheringQdbus::enable_tethering(const QString &tech)
     emit changing_tethering_status(tech, "Enabling tethering...");
     if (QString::compare(tech, "wifi") == 0) {
         // Enable tethering
-        // Try 4 times, tethering might not be available straight after powering
-        for (int i = 0; i < 4; ++i) {
+        // Try 5 times, tethering might not be available straight after powering
+        for (int i = 0; i < 5; ++i) {
             reply = dif_wifi->call(QDBus::Block, "SetProperty", QString("Tethering"),
                                     QVariant::fromValue(QDBusVariant(true)));
             if (QString::compare(reply.errorName(), "net.connman.Error.NotSupported") == 0) {
-                usleep(500*1000);
+                usleep(50*1000);
                 continue;
             }
             break;
@@ -246,19 +248,27 @@ void TetheringQdbus::enable_tethering(const QString &tech)
     }
     else if (QString::compare(tech, "bluetooth") == 0) {
         // Enable tethering
-        // Try 4 times, tethering might not be available straight after powering
-        for (int i = 0; i < 4; ++i) {
+        // Try 5 times, tethering might not be available straight after powering
+        for (int i = 0; i < 5; ++i) {
             reply = dif_bt->call(QDBus::Block, "SetProperty", QString("Tethering"),
                                  QVariant::fromValue(QDBusVariant(true)));
             if (QString::compare(reply.errorName(), "net.connman.Error.NotSupported") == 0) {
-                usleep(500*1000);
+                usleep(50*1000);
                 continue;
             }
             break;
         }
     }
 
-    if  (QString::compare(reply.errorName(), "") == 0) {
+    if  (QString::compare(reply.errorName(), "") == 0 ||
+         QString::compare(reply.errorName(), "net.connman.Error.AlreadyEnabled") == 0) {
+        changing_state = false;
+        if (QString::compare(tech, "wifi") == 0) {
+            emit wifi_property_changed_signal("Tethering", true);
+        }
+        else if (QString::compare(tech, "bluetooth") == 0) {
+            emit bt_property_changed_signal("Tethering", true);
+        }
         return;
     }
     else {
@@ -274,13 +284,14 @@ void TetheringQdbus::wifi_property_changed(QString name, QDBusVariant dval)
     QVariant value = dval.variant();
 
     if (QString::compare(name, "Powered") == 0) {
+        wifi_pstate = value.toBool();
         // Enable tethering after the adapter has been powered
-        if (changing_state) {
+        if (changing_state && value.toBool()) {
             enable_tethering("wifi");
         }
         // Save powered state, when tethering is disabled
-        else if (!wifi_tstate) {
-            wifi_pstate = value.toBool();
+        else if (!wifi_tstate && !changing_state) {
+            wifi_pstate_restore = wifi_pstate;
         }
     }
     if (QString::compare(name, "Tethering") == 0) {
@@ -289,7 +300,6 @@ void TetheringQdbus::wifi_property_changed(QString name, QDBusVariant dval)
         if (!bt_tstate && !wifi_tstate) {
             restore_connection_state();
         }
-        changing_state = false;
     }
     emit wifi_property_changed_signal(name, value);
 }
@@ -300,7 +310,7 @@ void TetheringQdbus::bt_property_changed(QString name, QDBusVariant dval)
 
     if (QString::compare(name, "Powered") == 0) {
         // Enable tethering after the adapter has been powered
-        if (changing_state) {
+        if (changing_state && value.toBool()) {
             enable_tethering("bluetooth");
         }
         // Save powered state, when tethering is disabled
@@ -314,7 +324,6 @@ void TetheringQdbus::bt_property_changed(QString name, QDBusVariant dval)
         if (!bt_tstate && !wifi_tstate) {
             restore_connection_state();
         }
-        changing_state = false;
     }
     emit bt_property_changed_signal(name, value);
 }
@@ -364,6 +373,9 @@ void TetheringQdbus::callback_wifi_cellular_connection(QDBusMessage msg)
 void TetheringQdbus::callback_wifi_connection(QDBusMessage msg)
 {
     qDebug(qPrintable(msg.service()));
+    dif_wifi->call(QDBus::Block, "SetProperty", QString("Powered"),
+                   QVariant::fromValue(QDBusVariant(false)));
+    wifi_pstate = false;
     if (cel_cstate) {
         power_on("wifi");
     }
@@ -378,6 +390,9 @@ void TetheringQdbus::callback_wifi_connection(QDBusMessage msg)
 void TetheringQdbus::callback_bt_wifi_connection(QDBusMessage msg)
 {
     qDebug(qPrintable(msg.service()));
+    dif_wifi->call(QDBus::Block, "SetProperty", QString("Powered"),
+                   QVariant::fromValue(QDBusVariant(false)));
+    wifi_pstate = false;
     if (cel_cstate) {
         power_on("bluetooth");
     }
@@ -405,8 +420,8 @@ void TetheringQdbus::enable(const QString &tech)
 
     if (QString::compare(tech, "wifi") == 0) {
         if (wifi_cstate && dif_wifi_service) {
-            // Disconnect open wifi connection
-            emit changing_tethering_status(tech, "Disconnecting Wifi...");
+            // Disconnect and power off wifi
+            emit changing_tethering_status(tech, "Powering off Wifi...");
             dif_wifi_service->callWithCallback("Disconnect", args, this,
                                                SLOT(callback_wifi_connection(QDBusMessage)),
                                                SLOT(callback_wifi_error(QDBusError)));
@@ -423,8 +438,8 @@ void TetheringQdbus::enable(const QString &tech)
     }
     else if (QString::compare(tech, "bluetooth") == 0) {
         if (wifi_cstate && dif_wifi_service) {
-            // Disconnect open wifi connection
-            emit changing_tethering_status(tech, "Disconnecting Wifi...");
+            // Disconnect and power off wifi
+            emit changing_tethering_status(tech, "Powering off Wifi...");
             dif_wifi_service->callWithCallback("Disconnect", args, this,
                                                SLOT(callback_bt_wifi_connection(QDBusMessage)),
                                                SLOT(callback_bt_error(QDBusError)));
@@ -460,13 +475,13 @@ void TetheringQdbus::disable(const QString &tech)
             QString::compare(reply.errorName(), "") == 0) {
         // Give some time before restoring powered state
         usleep(500*1000);
-        if (QString::compare(tech, "wifi") == 0 && !wifi_pstate) {
+        if (wifi_pstate != wifi_pstate_restore) {
             dif_wifi->call(QDBus::Block, "SetProperty", QString("Powered"),
-                           QVariant::fromValue(QDBusVariant(false)));
+                           QVariant::fromValue(QDBusVariant(wifi_pstate_restore)));
         }
-        else if (QString::compare(tech, "bluetooth") == 0 && !bt_pstate) {
+        if (QString::compare(tech, "bluetooth") == 0 && !bt_pstate) {
             dif_bt->call(QDBus::Block, "SetProperty", QString("Powered"),
-                         QVariant::fromValue(QDBusVariant(false)));
+                         QVariant::fromValue(QDBusVariant(bt_pstate)));
         }
     }
     else {

@@ -17,6 +17,7 @@ class TetheringQdbus : public QObject
     QDBusInterface *dif_cellular_service;
     QDBusInterface *dif_wifi_service;
     bool wifi_pstate;
+    bool wifi_pstate_restore;
     bool wifi_cstate;
     bool wifi_tstate;
     bool bt_pstate;
