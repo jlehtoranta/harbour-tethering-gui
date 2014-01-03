@@ -39,7 +39,9 @@ Known Issues/Notes
 
 * In some cases the enabling process might end up into an error and a user
   will need to try again or restart the app and try again.
+
     * Keep in mind though that not all errors are bugs in the gui
+
 
 * Any feedback and/or contributions are always welcome
 
@@ -59,8 +61,9 @@ Releases
 * Changelog:
     * ``v0.2.7``
         * fix issues due to Maadajävri's auto connect
-            * fix enabling of tethering, when there's an active wifi connection
-            * keep wifi switched off during bluetooth tethering
+
+            - fix enabling of tethering, when there's an active wifi connection
+            - keep wifi switched off during bluetooth tethering
         * fix an issue with enabling of bluetooth tethering, where the gui was
           sometimes left into "Enabling..." state
         * keep record of mobile data auto connect state
