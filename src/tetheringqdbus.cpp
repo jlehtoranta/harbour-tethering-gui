@@ -46,6 +46,8 @@ TetheringQdbus::~TetheringQdbus()
                this, SLOT(wifi_property_changed(QString, QDBusVariant)));
     disconnect(dif_bt, SIGNAL(PropertyChanged(QString, QDBusVariant)),
                this, SLOT(bt_property_changed(QString, QDBusVariant)));
+    disconnect(dif_cellular_service, SIGNAL(PropertyChanged(QString, QDBusVariant)),
+               this, SLOT(cel_service_property_changed(QString, QDBusVariant)));
     disconnect(dif_manager, SIGNAL(PropertyChanged(QString, QDBusVariant)),
                this, SLOT(connection_state_changed(QString, QDBusVariant)));
     // Free reserved memory
@@ -103,6 +105,8 @@ void TetheringQdbus::get_service_ifs()
         dif_wifi_service = NULL;
     }
     if (dif_cellular_service) {
+        disconnect(dif_cellular_service, SIGNAL(PropertyChanged(QString, QDBusVariant)),
+                   this, SLOT(cel_service_property_changed(QString, QDBusVariant)));
         delete dif_cellular_service;
         dif_cellular_service = NULL;
     }
@@ -119,6 +123,7 @@ void TetheringQdbus::get_service_ifs()
         QString name = i.value().value("Name").toString();
         QString state = i.value().value("State").toString();
         bool autoc = i.value().value("AutoConnect").toBool();
+
         if (QString::compare(tech, "wifi") == 0 &&
                 (QString::compare(state, "online") == 0 ||
                  QString::compare(state, "ready") == 0)) {
@@ -135,6 +140,8 @@ void TetheringQdbus::get_service_ifs()
                                                     "net.connman.Service",
                                                     *dcon,
                                                     this);
+            connect(dif_cellular_service, SIGNAL(PropertyChanged(QString, QDBusVariant)),
+                    this, SLOT(cel_service_property_changed(QString, QDBusVariant)));
             cel_name = name;
             if (QString::compare(state, "online") == 0 ||
                     QString::compare(state, "ready") == 0) {
@@ -326,6 +333,17 @@ void TetheringQdbus::bt_property_changed(QString name, QDBusVariant dval)
         }
     }
     emit bt_property_changed_signal(name, value);
+}
+
+void TetheringQdbus::cel_service_property_changed(QString name, QDBusVariant dval)
+{
+    QVariant value = dval.variant();
+
+    if (QString::compare(name, "AutoConnect") == 0) {
+        if (!changing_state && !wifi_tstate && !bt_tstate) {
+            cel_astate_restore = value.toBool();
+        }
+    }
 }
 
 void TetheringQdbus::connection_state_changed(QString name, QDBusVariant dval)

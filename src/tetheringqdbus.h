@@ -45,6 +45,7 @@ public slots:
     bool send_settings(const QVariantMap &values);
     void wifi_property_changed(QString name, QDBusVariant dval);
     void bt_property_changed(QString name, QDBusVariant dval);
+    void cel_service_property_changed(QString name, QDBusVariant dval);
     void connection_state_changed(QString name, QDBusVariant dval);
     bool settings_load_bool(const QString &name);
     void settings_save(const QString &name, const QVariant &value);
